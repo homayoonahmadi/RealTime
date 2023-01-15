@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">RealTime</string>
+    <string name="welcome_to_realtime">Welcome to RealTime!</string>
+    <string name="clear_realtime_cache">Clear realtime cache</string>
+</resources>
