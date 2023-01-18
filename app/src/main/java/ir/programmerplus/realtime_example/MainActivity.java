@@ -5,6 +5,9 @@ import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 
+import java.text.SimpleDateFormat;
+import java.util.Locale;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import ir.programmerplus.realtime.RealTime;
@@ -13,30 +16,38 @@ import ir.programmerplus.realtime_example.databinding.ActivityMainBinding;
 public class MainActivity extends AppCompatActivity {
 
     private ActivityMainBinding binding;
+    private CountDownTimer countDownTimer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        // request for location permissions
-        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 0);
+        requestLocationPermission();
 
         // set click listener to clear cached info when button clicked
         binding.btnClearCache.setOnClickListener(v -> RealTime.clearCachedInfo());
 
-        // create a timer to show current time
-        CountDownTimer cdt = new CountDownTimer(Long.MAX_VALUE, 1000) {
+        createDateTimer();
+    }
 
-            @SuppressLint("SetTextI18n")
+    /**
+     * This function will create a count down timer to show current datetime based on realtime reliable time
+     */
+    @SuppressLint("SetTextI18n")
+    private void createDateTimer() {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("EEE, dd MMMM yyyy HH:mm:ss z", Locale.ENGLISH);
+
+        countDownTimer = new CountDownTimer(Long.MAX_VALUE, 1000) {
             @Override
             public void onTick(long millisUntilFinished) {
 
                 if (RealTime.isInitialized()) {
-                    binding.txtDateTime.setText(RealTime.now().toString());
+                    binding.txtDateTime.setText(simpleDateFormat.format(RealTime.now()));
                 } else {
-                    binding.txtDateTime.setText("RealTime is Not initialized yet.");
+                    binding.txtDateTime.setText("RealTime is not initialized yet.");
                 }
             }
 
@@ -44,6 +55,27 @@ public class MainActivity extends AppCompatActivity {
             public void onFinish() {
             }
         };
-        cdt.start();
+        countDownTimer.start();
+    }
+
+    /**
+     * This function requests for location permission to get time from Gps provider
+     */
+    private void requestLocationPermission() {
+        // request for location permissions
+        ActivityCompat.requestPermissions(this, new String[]{
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+        }, 0);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        // stop counter
+        if (countDownTimer != null) {
+            countDownTimer.cancel();
+        }
     }
 }
