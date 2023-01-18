@@ -1,15 +1,27 @@
 pluginManagement {
     repositories {
         gradlePluginPortal()
-        google()
+        maven { url 'https://gradle.iranrepo.ir' }
+        maven { url 'https://maven.google.com' }
         mavenCentral()
+        google()
+        maven { url 'https://jitpack.io' }
+        maven { url 'https://mvnrepository.com' }
+        maven { url 'https://repo1.maven.org/maven2/' }
+        maven { url 'https://maven.restlet.org' }
     }
 }
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
-        google()
+        maven { url 'https://gradle.iranrepo.ir' }
+        maven { url 'https://maven.google.com' }
         mavenCentral()
+        google()
+        maven { url 'https://jitpack.io' }
+        maven { url 'https://mvnrepository.com' }
+        maven { url 'https://repo1.maven.org/maven2/' }
+        maven { url 'https://maven.restlet.org' }
     }
 }
 rootProject.name = "RealTime"

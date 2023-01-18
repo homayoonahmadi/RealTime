@@ -1,5 +1,22 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
-plugins {
-    id 'com.android.application' version '7.3.1' apply false
-    id 'com.android.library' version '7.3.1' apply false
+buildscript {
+    repositories {
+        maven { url 'https://gradle.iranrepo.ir' }
+        maven { url 'https://maven.google.com' }
+        mavenCentral()
+        google()
+        maven { url 'https://jitpack.io' }
+        maven { url 'https://mvnrepository.com' }
+        maven { url 'https://repo1.maven.org/maven2/' }
+        maven { url 'https://maven.restlet.org' }
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:7.4.0'
+        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.7.21'
+        classpath 'androidx.navigation:navigation-safe-args-gradle-plugin:2.5.3'
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
 }

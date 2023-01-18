@@ -10,8 +10,6 @@ android {
     defaultConfig {
         minSdk 16
         targetSdk 33
-        versionCode 1
-        versionName "1.0.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -34,11 +32,8 @@ android {
 
 dependencies {
 
-    // Android JetPack
-    implementation 'androidx.appcompat:appcompat:1.5.1'
-
-    // Annotations
-    implementation "androidx.annotation:annotation:1.5.0"
+    // LiveData
+    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.5.1'
 
     // RxJava
     implementation 'io.reactivex.rxjava2:rxandroid:2.1.0'
@@ -55,7 +50,7 @@ afterEvaluate {
 
                 groupId = 'ir.programmerplus.realtime'
                 artifactId = 'realtime'
-                version = '1.0.0'
+                version = '1.0.1'
             }
         }
     }

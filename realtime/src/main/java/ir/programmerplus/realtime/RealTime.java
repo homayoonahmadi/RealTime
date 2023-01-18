@@ -13,7 +13,6 @@ import android.os.SystemClock;
 
 import org.apache.commons.net.ntp.NTPUDPClient;
 import org.apache.commons.net.ntp.TimeInfo;
-import org.jetbrains.annotations.Contract;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -27,8 +26,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import androidx.annotation.NonNull;
-import androidx.core.app.ActivityCompat;
 import androidx.databinding.Observable;
 import androidx.databinding.ObservableBoolean;
 import androidx.lifecycle.Observer;
@@ -40,6 +37,15 @@ import io.reactivex.exceptions.UndeliverableException;
 import io.reactivex.plugins.RxJavaPlugins;
 import io.reactivex.schedulers.Schedulers;
 
+/**
+ * Using RealTime class, you only need to initialize current reliable time once using multiple providers like
+ * GPS providers, NTP servers or even date header of your own server, and use the reliable current time until
+ * next boot of device.
+ * <p/>
+ * Author: Homayoon Ahmadi
+ * <br/>
+ * Email: homayoon.ahmadi8@gmail.com
+ */
 public class RealTime {
 
     private static final String TAG = RealTime.class.getSimpleName();
@@ -55,7 +61,7 @@ public class RealTime {
     private NTPUDPClient timeClient;
     private HttpURLConnection urlConnection;
     private final LocationManager locationManager;
-    private final ConnectionLiveData connectionLiveData;
+    private final NetworkState networkStateLiveData;
     private OnRealTimeInitializedListener initializedListener;
     private final CompositeDisposable disposables = new CompositeDisposable();
 
@@ -69,13 +75,13 @@ public class RealTime {
      *
      * @param context application context
      */
-    private RealTime(@NonNull Context context) {
+    private RealTime(Context context) {
         context = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N ? context.createDeviceProtectedStorageContext() : context;
 
         CacheUtils.initialize(context);
 
         this.context = context.getApplicationContext();
-        this.connectionLiveData = new ConnectionLiveData(context);
+        this.networkStateLiveData = new NetworkState(context);
         this.locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
 
         initRxJavaErrorHandler();
@@ -251,7 +257,7 @@ public class RealTime {
             }
 
             if (timeServerEnabled || ntpServerEnabled) {
-                connectionLiveData.observeForever(networkObserver);
+                networkStateLiveData.observeForever(networkObserver);
             }
         }
     }
@@ -271,8 +277,6 @@ public class RealTime {
      * @return current reliable date object
      * @throws IllegalStateException if the class is not initialized yet
      */
-    @NonNull
-    @Contract(" -> new")
     public static Date now() throws IllegalStateException {
         if (!isInitialized()) {
             throw new IllegalStateException("You need to init RealTime at least once.");
@@ -326,7 +330,6 @@ public class RealTime {
      * @throws ParseException throws ParseException if date header is not formed
      *                        in correct datetime format
      */
-    @NonNull
     private Long fetchTimeServer() throws IOException, ParseException {
         LogUtils.d(TAG, "Fetching time from time server: " + timeServerHost + " ...");
 
@@ -393,7 +396,6 @@ public class RealTime {
      * @return current time we got from NTP server
      * @throws IOException throws IOException if we couldn't connect to server
      */
-    @NonNull
     private Long fetchNtpTime() throws IOException {
         LogUtils.d(TAG, "Fetching time from Ntp server: " + ntpServerHost + " ...");
 
@@ -429,8 +431,8 @@ public class RealTime {
      */
     @SuppressLint("MissingPermission")
     private void requestLocationUpdates() {
-        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
-                ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+        if (context.checkCallingOrSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)== PackageManager.PERMISSION_GRANTED ||
+                context.checkCallingOrSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)== PackageManager.PERMISSION_GRANTED) {
 
             if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) ||
                     locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
@@ -492,8 +494,8 @@ public class RealTime {
         CacheUtils.setCachedDeviceUptime(deviceUptime);
 
         // disable network connection state callback if exists
-        if (connectionLiveData != null) {
-            connectionLiveData.removeObserver(networkObserver);
+        if (networkStateLiveData != null) {
+            networkStateLiveData.removeObserver(networkObserver);
         }
 
         // Unsubscribe from all network providers
@@ -518,7 +520,7 @@ public class RealTime {
     private final LocationListener locationListener = new LocationListener() {
         @SuppressLint("MissingPermission")
         @Override
-        public void onLocationChanged(@NonNull Location location) {
+        public void onLocationChanged(Location location) {
             long gpsTime = location.getTime();
 
             // Adding 1024 weeks to fix Week Number Rollover issue for old GPS chips

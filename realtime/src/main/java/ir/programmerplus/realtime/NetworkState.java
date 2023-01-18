@@ -16,7 +16,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.lifecycle.LiveData;
 
-public class ConnectionLiveData extends LiveData<Boolean> {
+public class NetworkState extends LiveData<Boolean> {
+
+    private static final String CONNECTIVITY_CHANGE = "android.net.conn.CONNECTIVITY_CHANGE";
 
     private final Context context;
     private final ConnectivityManager connectivityManager;
@@ -28,7 +30,7 @@ public class ConnectionLiveData extends LiveData<Boolean> {
             .addTransportType(NetworkCapabilities.TRANSPORT_WIFI);
 
 
-    public ConnectionLiveData(Context context) {
+    public NetworkState(Context context) {
         this.context = context;
         connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
     }
@@ -43,7 +45,7 @@ public class ConnectionLiveData extends LiveData<Boolean> {
         else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) marshmallowNetworkAvailableRequest();
         else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) lollipopNetworkAvailableRequest();
         else {
-            context.registerReceiver(networkReceiver, new IntentFilter("android.net.conn.CONNECTIVITY_CHANGE"));
+            context.registerReceiver(networkReceiver, new IntentFilter(CONNECTIVITY_CHANGE));
         }
     }
 
