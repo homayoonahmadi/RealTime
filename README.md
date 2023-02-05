@@ -66,7 +66,8 @@ if (RealTime.isInitialized()) {
 - If you are initializing shared preference inside your Application class, use this line instead of raw context instance:
 
 ```
-Context context = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) ? createDeviceProtectedStorageContext() : getApplicationContext();
+Context context = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) ?
+    createDeviceProtectedStorageContext() : getApplicationContext();
 ```
 It will prevent crash after rebooting device because RealTime starts to initialize on direct boot mode event: ```android.intent.action.LOCKED_BOOT_COMPLETED```
 - RealTime tries to get time using a retry with delay strategy if current network doesn't have internet connection yet.
@@ -91,3 +92,21 @@ time.windows.com
 1.us.pool.ntp.org
 ir.pool.ntp.org
 ```
+
+# Methods
+
++ **RealTime class methods**
+
+| method                                      | description                                                                                                                 |
+|---------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------|
+| withNtpServer(String ntpHost)               | This function will enable and set the url of NTP server.                                                                   |
+| withNtpServer()                             | This function enables NTP server with default NTP server.                                                                         |
+| withTimeServer(String serverHost)           | This function will enable and set the url of custom server.                                                                         |
+| withTimeServer()                            | This function enables custom server with default server address.                                                                  |
+| withGpsProvider()                           | This function enables gps provider if required permissions exist in manifest.  |
+| setLoggingEnabled(boolean enabled)          | Sets if logs needs to be logged in.                                                                                            |
+| build()                  | Starts to initialize RealTime using enabled providers.                                                                                                 |
+| build(OnRealTimeInitializedListener listener)                | Starts to initialize RealTime using enabled providers and will call onInitializedListener's onInitialized(Date date) interface.                                                                                                |
+| isInitialized()                  | Returns true if RealTime is initialized or false otherwise.                                                                                                 |
+| now()                  | Returns current reliable datetime if the class has initialized.                                                                                                 |
+| clearCachedInfo()                  | This function clears all cached data so RealTime tries to initialize dateTime again.                                                                                                 |
