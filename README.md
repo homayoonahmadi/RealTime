@@ -1,5 +1,10 @@
 # RealTime
-Reliable time library for Android. Just initialize the current time using one of several time providers like GPS, NTP servers, or your own server and get current reliable time impervious to device clock changes by the user until the next device boot.
+
+[![platform](https://img.shields.io/badge/platform-Android-green.svg)](https://www.android.com)
+[![API](https://img.shields.io/badge/API-16%2B-brightgreen.svg?style=flat)](https://android-arsenal.com/api?level=16)
+[![Jitpack](https://jitpack.io/v/homayoonahmadi/RealTime.svg)](https://jitpack.io/#homayoonahmadi/RealTime)
+
+Reliable is a time library for Android. Just initialize the current time using one of several time providers like GPS, NTP servers, or your own server and get current reliable time impervious to device clock changes by the user until the next device boot.
 
 # Introduction Video
 https://user-images.githubusercontent.com/29772463/216837670-d856b038-bc81-4e70-8dcb-f737c36febe0.mp4
@@ -12,6 +17,49 @@ https://user-images.githubusercontent.com/29772463/216837670-d856b038-bc81-4e70-
 - RealTime detects device reboot and will reinitialize dateTime automatically after rebooting
 - RealTime will detect network detection status changes and location provider ON/OFF changes and requests for current time if it has not initialized yet
 
+
+# How to add dependency:
+
+Step 1. Add the JitPack repository to your build.gradle file
+
+```groovy
+allprojects {
+    repositories {
+        maven { url 'https://jitpack.io' }
+    }
+}
+```
+
+Step 2. Add the dependency
+
+```groovy
+dependencies {
+    implementation 'com.github.homayoonahmadi:RealTime:1.0.1'
+}
+```
+
+# How to use
+Add this to `onCreate` method of your `Application` class:
+
+```
+RealTime.builder(context)
+      .withGpsProvider()
+      .withNtpServer("time.nist.gov")
+      .withTimeServer("https://google.com")
+      .setLoggingEnabled(BuildConfig.DEBUG)
+      .build(date -> Log.d(TAG , "RealTime initialized, dateTime: " + date));
+```
+
+Then everywhere you need reliable time first you need to check if RealTime is initialized or not:
+```
+SimpleDateFormat simpleDateFormat = new SimpleDateFormat("EEE, dd MMMM yyyy HH:mm:ss z", Locale.ENGLISH);
+
+if (RealTime.isInitialized()) {
+    binding.txtDateTime.setText(simpleDateFormat.format(RealTime.now()));
+} else {
+    binding.txtDateTime.setText("RealTime is not initialized yet.");
+}
+```
 
 # Notes
 - If you want to use custom server you need to make sure that server's time is correct and reliable.
@@ -34,3 +82,12 @@ It will prevent crash after rebooting device because RealTime starts to initiali
 </manifest>
 ```
 
+NTP servers tested:
+```
+time.nist.gov
+time-a.nist.gov
+time.google.com
+time.windows.com
+1.us.pool.ntp.org
+ir.pool.ntp.org
+```
