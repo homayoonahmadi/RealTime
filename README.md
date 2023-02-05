@@ -4,7 +4,7 @@
 [![API](https://img.shields.io/badge/API-16%2B-brightgreen.svg?style=flat)](https://android-arsenal.com/api?level=16)
 [![Jitpack](https://jitpack.io/v/homayoonahmadi/RealTime.svg)](https://jitpack.io/#homayoonahmadi/RealTime)
 
-Reliable is a time library for Android. Just initialize the current time using one of several time providers like GPS, NTP servers, or your own server and get current reliable time impervious to device clock changes by the user until the next device boot.
+RealTime is a reliable time library for Android. Just initialize the current time using one of several time providers like GPS, NTP servers, or your own server and get current reliable time impervious to device clock changes by the user until the next device boot.
 
 # Introduction Video
 https://user-images.githubusercontent.com/29772463/216837670-d856b038-bc81-4e70-8dcb-f737c36febe0.mp4
