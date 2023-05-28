@@ -22,13 +22,20 @@ import java.net.UnknownHostException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
+import androidx.annotation.NonNull;
 import androidx.databinding.Observable;
 import androidx.databinding.ObservableBoolean;
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LifecycleEventObserver;
+import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.Observer;
+import androidx.lifecycle.ProcessLifecycleOwner;
 import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
@@ -36,6 +43,14 @@ import io.reactivex.disposables.Disposable;
 import io.reactivex.exceptions.UndeliverableException;
 import io.reactivex.plugins.RxJavaPlugins;
 import io.reactivex.schedulers.Schedulers;
+import ir.programmerplus.realtime.interfaces.EnhancedLocationListener;
+import ir.programmerplus.realtime.interfaces.OnRealTimeInitializedListener;
+import ir.programmerplus.realtime.network.NetworkState;
+import ir.programmerplus.realtime.network.RetryDelayStrategy;
+import ir.programmerplus.realtime.network.RetryWithDelay;
+import ir.programmerplus.realtime.utils.CacheUtils;
+import ir.programmerplus.realtime.utils.LogUtils;
+import ir.programmerplus.realtime.utils.RealTimeUtils;
 
 /**
  * Using RealTime class, you only need to initialize current reliable time once using multiple providers like
@@ -46,16 +61,17 @@ import io.reactivex.schedulers.Schedulers;
  * <br/>
  * Email: homayoon.ahmadi8@gmail.com
  */
-public class RealTime {
+public class RealTime implements LifecycleEventObserver {
 
     private static final String TAG = RealTime.class.getSimpleName();
 
+    private long backoffDelay;
     private boolean ntpServerEnabled = false;
     private boolean timeServerEnabled = false;
     private boolean gpsProviderEnabled = false;
 
-    private String ntpServerHost = "time.google.com";
-    private String timeServerHost = "https://google.com";
+    private final LinkedHashSet<String> ntpServerHosts = new LinkedHashSet<>();
+    private final LinkedHashSet<String> timeServerHosts = new LinkedHashSet<>();
 
     private final Context context;
     private NTPUDPClient timeClient;
@@ -88,6 +104,28 @@ public class RealTime {
         initRealTimeStatusObservable();
 
         INITIALIZED.set(isInitialized());
+
+        ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
+    }
+
+    @Override
+    public void onStateChanged(@NonNull LifecycleOwner lifecycleOwner, @NonNull Lifecycle.Event event) {
+        switch (event) {
+            case ON_START:
+                LogUtils.i(TAG, "Application is in foreground");
+
+                if (isInitialized() && cachedTimeIsValid(backoffDelay)) {
+                    LogUtils.v(TAG, "RealTime cached time is valid. No need to resynchronize RealTime at this time.");
+                } else {
+                    LogUtils.v(TAG, "RealTime cached time is NOT valid. Trying to resynchronize RealTime...");
+                    build();
+                }
+                break;
+
+            case ON_STOP:
+                LogUtils.i(TAG, "Application is in background");
+                break;
+        }
     }
 
     /**
@@ -97,8 +135,11 @@ public class RealTime {
      * @return RealTime instance
      */
     public static RealTime builder(Context context) {
-        if (instance == null) {
-            instance = new RealTime(context);
+
+        synchronized (RealTime.class) {
+            if (instance == null) {
+                instance = new RealTime(context);
+            }
         }
 
         return instance;
@@ -153,16 +194,7 @@ public class RealTime {
      * @return RealTime instance
      */
     public RealTime withNtpServer(String ntpHost) {
-        this.ntpServerHost = ntpHost;
-        return withNtpServer();
-    }
-
-    /**
-     * This method will enable NTP server provider using default ntp server
-     *
-     * @return RealTime instance
-     */
-    public RealTime withNtpServer() {
+        ntpServerHosts.add(ntpHost);
         ntpServerEnabled = true;
         return this;
     }
@@ -177,19 +209,7 @@ public class RealTime {
      * @return RealTime instance
      */
     public RealTime withTimeServer(String serverHost) {
-        this.timeServerHost = serverHost;
-        return withTimeServer();
-    }
-
-    /**
-     * This method will enable Time server provider. Using this function, you
-     * can get current server time using "Date" header of response.
-     * <p>
-     * This function just enables the time server using default time server.
-     *
-     * @return RealTime instance
-     */
-    public RealTime withTimeServer() {
+        this.timeServerHosts.add(serverHost);
         timeServerEnabled = true;
         return this;
     }
@@ -228,6 +248,20 @@ public class RealTime {
     }
 
     /**
+     * Sets the backoff delay for re-syncing RealTime with time providers.
+     *
+     * @param backoffDelay the duration of the backoff delay
+     * @param unit         the unit of time for the backoff delay
+     * @return the RealTime instance with the updated backoff delay
+     * @throws NullPointerException if the unit parameter is null
+     */
+    public RealTime setSyncBackoffDelay(long backoffDelay, @NonNull TimeUnit unit) {
+        this.backoffDelay = TimeUnit.MILLISECONDS.convert(backoffDelay, unit);
+
+        return this;
+    }
+
+    /**
      * This function will set onInitializeListener and build the RealTime and starts
      * to sync with requested providers
      *
@@ -249,17 +283,22 @@ public class RealTime {
      */
     public void build() {
 
-        if (!isInitialized()) {
-            LogUtils.v(TAG, "Starting to build RealTime...");
+        LogUtils.v(TAG, "Starting to build RealTime...");
 
-            if (gpsProviderEnabled) {
-                requestLocationUpdates();
-            }
-
-            if (timeServerEnabled || ntpServerEnabled) {
-                networkStateLiveData.observeForever(networkObserver);
-            }
+        if (gpsProviderEnabled) {
+            requestLocationUpdates();
         }
+
+        if (timeServerEnabled || ntpServerEnabled) {
+            networkStateLiveData.observeForever(networkObserver);
+        }
+    }
+
+    private boolean cachedTimeIsValid(long backoffDelay) {
+        long cachedTime = CacheUtils.getCachedTime();
+        long timeNow = now().getTime();
+
+        return (timeNow - cachedTime) < backoffDelay;
     }
 
     /**
@@ -294,7 +333,7 @@ public class RealTime {
      * This function requests headers from provided server url and extracts Date header from response.
      * We use RxJava to manage http request calls and use retry capability
      */
-    private void requestTimeServer() {
+    private void requestTimeServer(String timeServerHost) {
         RetryWithDelay retryWithDelay = RetryWithDelay.builder()
                 .retryDelayStrategy(RetryDelayStrategy.CONSTANT_DELAY_TIMES_RETRY_COUNT)
                 .maxRetries(Integer.MAX_VALUE)
@@ -304,7 +343,7 @@ public class RealTime {
                 .build();
 
         Disposable disposable = Single
-                .fromCallable(this::fetchTimeServer)
+                .fromCallable(() -> fetchTimeServer(timeServerHost))
                 .retryWhen(retryWithDelay)
                 .doOnDispose(() -> {
                     LogUtils.d(TAG, "Canceling request from time server...");
@@ -330,7 +369,7 @@ public class RealTime {
      * @throws ParseException throws ParseException if date header is not formed
      *                        in correct datetime format
      */
-    private Long fetchTimeServer() throws IOException, ParseException {
+    private Long fetchTimeServer(String timeServerHost) throws IOException, ParseException {
         LogUtils.d(TAG, "Fetching time from time server: " + timeServerHost + " ...");
 
         try {
@@ -363,7 +402,7 @@ public class RealTime {
      * This function requests current time from provided NTP server using NTPUDPClient.
      * We use RxJava to manage http request calls and use retry capability
      */
-    private void requestNtpTime() {
+    private void requestNtpTime(String ntpServerHost) {
         RetryWithDelay retryWithDelay = RetryWithDelay.builder()
                 .retryDelayStrategy(RetryDelayStrategy.CONSTANT_DELAY_TIMES_RETRY_COUNT)
                 .maxRetries(Integer.MAX_VALUE)
@@ -373,7 +412,7 @@ public class RealTime {
                 .build();
 
         Disposable disposable = Single
-                .fromCallable(this::fetchNtpTime)
+                .fromCallable(() -> fetchNtpTime(ntpServerHost))
                 .retryWhen(retryWithDelay)
                 .subscribeOn(Schedulers.io())
                 .doOnDispose(() -> {
@@ -396,7 +435,7 @@ public class RealTime {
      * @return current time we got from NTP server
      * @throws IOException throws IOException if we couldn't connect to server
      */
-    private Long fetchNtpTime() throws IOException {
+    private Long fetchNtpTime(String ntpServerHost) throws IOException {
         LogUtils.d(TAG, "Fetching time from Ntp server: " + ntpServerHost + " ...");
 
         timeClient = new NTPUDPClient();
@@ -431,8 +470,8 @@ public class RealTime {
      */
     @SuppressLint("MissingPermission")
     private void requestLocationUpdates() {
-        if (context.checkCallingOrSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)== PackageManager.PERMISSION_GRANTED ||
-                context.checkCallingOrSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)== PackageManager.PERMISSION_GRANTED) {
+        if (context.checkCallingOrSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+                context.checkCallingOrSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
 
             if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) ||
                     locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
@@ -517,20 +556,10 @@ public class RealTime {
     /**
      * Here we implement a location listener to get date from location provider
      */
-    private final LocationListener locationListener = new LocationListener() {
+    private final LocationListener locationListener = new EnhancedLocationListener() {
         @SuppressLint("MissingPermission")
         @Override
-        public void onLocationChanged(Location location) {
-            long gpsTime = location.getTime();
-
-            // Adding 1024 weeks to fix Week Number Rollover issue for old GPS chips
-            // 619315200000L = 1024 * 7 * 24 * 60 * 60 * 1000   ->  means 1024 weeks
-            // Note: This fix works for next 20 years since provided timestamp below
-            // See: https://stackoverflow.com/questions/56147606/
-            // See: https://www.cisa.gov/gps-week-number-roll-over
-            if (gpsTime > 0 && gpsTime < 1673000000000L)
-                gpsTime += 619315200000L;
-
+        public void onLocationChanged(@NonNull Location location, long gpsTime) {
             LogUtils.i(TAG, "Time from location provider: " + new Date(gpsTime));
 
             setTime(gpsTime);
@@ -541,12 +570,12 @@ public class RealTime {
         }
 
         @Override
-        public void onProviderDisabled(String provider) {
+        public void onProviderDisabled(@NonNull String provider) {
             LogUtils.v(TAG, "Location provider: " + provider + " is disabled.");
         }
 
         @Override
-        public void onProviderEnabled(String provider) {
+        public void onProviderEnabled(@NonNull String provider) {
             LogUtils.v(TAG, "Location provider enabled.");
 
             if (locationManager != null && !isInitialized()) {
@@ -569,11 +598,15 @@ public class RealTime {
             LogUtils.i(TAG, "Network connection is available.");
 
             if (ntpServerEnabled) {
-                requestNtpTime();
+                for (String ntpServerHost : ntpServerHosts) {
+                    requestNtpTime(ntpServerHost);
+                }
             }
 
             if (timeServerEnabled) {
-                requestTimeServer();
+                for (String timeServerHost : timeServerHosts) {
+                    requestTimeServer(timeServerHost);
+                }
             }
 
         } else {

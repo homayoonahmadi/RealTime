@@ -1,4 +1,4 @@
-package ir.programmerplus.realtime;
+package ir.programmerplus.realtime.network;
 
 import android.annotation.TargetApi;
 import android.content.BroadcastReceiver;
@@ -42,7 +42,7 @@ public class NetworkState extends LiveData<Boolean> {
         updateConnection();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) connectivityManager.registerDefaultNetworkCallback(getConnectivityMarshmallowManagerCallback());
-        else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) marshmallowNetworkAvailableRequest();
+        else if (Build.VERSION.SDK_INT == Build.VERSION_CODES.M) marshmallowNetworkAvailableRequest();
         else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) lollipopNetworkAvailableRequest();
         else {
             context.registerReceiver(networkReceiver, new IntentFilter(CONNECTIVITY_CHANGE));
@@ -119,6 +119,7 @@ public class NetworkState extends LiveData<Boolean> {
         }
     };
 
+    @SuppressWarnings("deprecation")
     private void updateConnection() {
         NetworkInfo activeNetwork = connectivityManager.getActiveNetworkInfo();
         if (activeNetwork != null) {

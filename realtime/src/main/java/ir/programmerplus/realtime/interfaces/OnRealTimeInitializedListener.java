@@ -1,4 +1,4 @@
-package ir.programmerplus.realtime;
+package ir.programmerplus.realtime.interfaces;
 
 import java.util.Date;
 

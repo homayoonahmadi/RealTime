@@ -1,4 +1,4 @@
-package ir.programmerplus.realtime;
+package ir.programmerplus.realtime.network;
 
 import org.reactivestreams.Publisher;
 
@@ -8,6 +8,7 @@ import java.util.concurrent.TimeUnit;
 import androidx.annotation.NonNull;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Function;
+import ir.programmerplus.realtime.utils.LogUtils;
 
 import static java.util.Objects.requireNonNull;
 

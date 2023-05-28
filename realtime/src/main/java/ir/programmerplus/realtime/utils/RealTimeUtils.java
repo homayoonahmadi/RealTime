@@ -1,4 +1,4 @@
-package ir.programmerplus.realtime;
+package ir.programmerplus.realtime.utils;
 
 import android.content.Context;
 import android.content.pm.PackageInfo;

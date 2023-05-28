@@ -1,9 +1,9 @@
 package ir.programmerplus.realtime_example;
 
 
-import android.content.Context;
-import android.os.Build;
 import android.util.Log;
+
+import java.util.concurrent.TimeUnit;
 
 import androidx.multidex.MultiDexApplication;
 import ir.programmerplus.realtime.RealTime;
@@ -16,13 +16,15 @@ public class Application extends MultiDexApplication {
     public void onCreate() {
         super.onCreate();
 
-        Context context = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N ? createDeviceProtectedStorageContext() : this;
-
-        RealTime.builder(context)
+        RealTime.builder(this)
                 .withGpsProvider()
                 .withNtpServer("time.nist.gov")
+                .withNtpServer("time.google.com")
+                .withNtpServer("time.windows.com")
+                .withTimeServer("https://time.ir")
                 .withTimeServer("https://google.com")
                 .setLoggingEnabled(BuildConfig.DEBUG)
-                .build(date -> Log.d(TAG , "RealTime initialized, dateTime: " + date));
+                .setSyncBackoffDelay(30, TimeUnit.SECONDS)
+                .build(date -> Log.d(TAG, "RealTime is initialized, current dateTime: " + date));
     }
 }

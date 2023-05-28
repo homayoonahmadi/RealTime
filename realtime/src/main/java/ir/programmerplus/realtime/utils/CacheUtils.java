@@ -1,7 +1,9 @@
-package ir.programmerplus.realtime;
+package ir.programmerplus.realtime.utils;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+
+import ir.programmerplus.realtime.BuildConfig;
 
 public abstract class CacheUtils {
 
