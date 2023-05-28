@@ -58,18 +58,12 @@ public class RetryWithDelay implements Function<Flowable<? extends Throwable>, P
     private long delaySeconds() {
         requireNonNull(retryDelayStrategy, "RetryDelayStrategy must not be null.");
 
-        switch (retryDelayStrategy) {
-            case CONSTANT_DELAY:
-                return retryDelaySeconds;
-            case RETRY_COUNT:
-                return retryCount;
-            case CONSTANT_DELAY_TIMES_RETRY_COUNT:
-                return Math.min(retryDelaySeconds * retryCount, mexDelaySeconds);
-            case CONSTANT_DELAY_RAISED_TO_RETRY_COUNT:
-                return (long) Math.pow(retryDelaySeconds, retryCount);
-            default:
-                return 0;
-        }
+        return switch (retryDelayStrategy) {
+            case CONSTANT_DELAY -> retryDelaySeconds;
+            case RETRY_COUNT -> retryCount;
+            case CONSTANT_DELAY_TIMES_RETRY_COUNT -> Math.min(retryDelaySeconds * retryCount, mexDelaySeconds);
+            case CONSTANT_DELAY_RAISED_TO_RETRY_COUNT -> (long) Math.pow(retryDelaySeconds, retryCount);
+        };
     }
 
     public static class RetryWithDelayBuilder {

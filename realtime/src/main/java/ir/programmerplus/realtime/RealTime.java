@@ -111,20 +111,16 @@ public class RealTime implements LifecycleEventObserver {
     @Override
     public void onStateChanged(@NonNull LifecycleOwner lifecycleOwner, @NonNull Lifecycle.Event event) {
         switch (event) {
-            case ON_START:
+            case ON_START -> {
                 LogUtils.i(TAG, "Application is in foreground");
-
                 if (isInitialized() && cachedTimeIsValid(backoffDelay)) {
                     LogUtils.v(TAG, "RealTime cached time is valid. No need to resynchronize RealTime at this time.");
                 } else {
                     LogUtils.v(TAG, "RealTime cached time is NOT valid. Trying to resynchronize RealTime...");
                     build();
                 }
-                break;
-
-            case ON_STOP:
-                LogUtils.i(TAG, "Application is in background");
-                break;
+            }
+            case ON_STOP -> LogUtils.i(TAG, "Application is in background");
         }
     }
 
@@ -369,7 +365,7 @@ public class RealTime implements LifecycleEventObserver {
      * @throws ParseException throws ParseException if date header is not formed
      *                        in correct datetime format
      */
-    private Long fetchTimeServer(String timeServerHost) throws IOException, ParseException {
+    private Long fetchTimeServer(String timeServerHost) throws IOException, ParseException, NullPointerException {
         LogUtils.d(TAG, "Fetching time from time server: " + timeServerHost + " ...");
 
         try {
