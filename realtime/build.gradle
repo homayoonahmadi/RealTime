@@ -28,6 +28,13 @@ android {
     buildFeatures {
         dataBinding true
     }
+
+    publishing {
+        singleVariant('release') {
+            withSourcesJar()
+            withJavadocJar()
+        }
+    }
 }
 
 dependencies {
@@ -49,7 +56,7 @@ afterEvaluate {
     publishing {
         publications {
             release(MavenPublication) {
-                artifact("$buildDir/outputs/aar/library-release.aar")
+                from components.release
 
                 groupId = 'ir.programmerplus.realtime'
                 artifactId = 'realtime'
