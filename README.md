@@ -94,14 +94,14 @@ ir.pool.ntp.org
 
 + **RealTime class methods**
 
-| method                                      | description                                                                                                                 |
-|---------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------|
-| withNtpServer(String ntpHost)               | This function will enable and set the url of NTP server.                                                                   |
-| withTimeServer(String serverHost)           | This function will enable and set the url of custom server.                                                                         |
-| withGpsProvider()                           | This function enables gps provider if required permissions exist in manifest.  |
-| setLoggingEnabled(boolean enabled)          | Sets if logs needs to be logged in.                                                                                            |
-| build()                  | Starts to initialize RealTime using enabled providers.                                                                                                 |
-| build(OnRealTimeInitializedListener listener)                | Starts to initialize RealTime using enabled providers and will call onInitializedListener's onInitialized(Date date) interface.                                                                                                |
-| isInitialized()                  | Returns true if RealTime is initialized or false otherwise.                                                                                                 |
-| now()                  | Returns current reliable datetime if the class has initialized.                                                                                                 |
-| clearCachedInfo()                  | This function clears all cached data so RealTime tries to initialize dateTime again.                                                                                                 |
+| method                                        | description                                                                                                                     |
+|-----------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------|
+| withNtpServer(String ntpHost)                 | This function will enable and set the url of NTP server.                                                                        |
+| withTimeServer(String serverHost)             | This function will enable and set the url of custom server.                                                                     |
+| withGpsProvider()                             | This function enables gps provider if required permissions exist in manifest.                                                   |
+| setLoggingEnabled(boolean enabled)            | Sets if logs needs to be logged in.                                                                                             |
+| build()                                       | Starts to initialize RealTime using enabled providers.                                                                          |
+| build(OnRealTimeInitializedListener listener) | Starts to initialize RealTime using enabled providers and will call onInitializedListener's onInitialized(Date date) interface. |
+| isInitialized()                               | Returns true if RealTime is initialized or false otherwise.                                                                     |
+| now()                                         | Returns current reliable datetime if the class has initialized.                                                                 |
+| clearCachedInfo()                             | This function clears all cached data so RealTime tries to initialize dateTime again.                                            |
