@@ -42,12 +42,16 @@ dependencies {
 Add this to `onCreate` method of your `Application` class:
 
 ```
-RealTime.builder(context)
+RealTime.builder(this)
       .withGpsProvider()
       .withNtpServer("time.nist.gov")
+      .withNtpServer("time.google.com")
+      .withNtpServer("time.windows.com")
+      .withTimeServer("https://bing.com")
       .withTimeServer("https://google.com")
       .setLoggingEnabled(BuildConfig.DEBUG)
-      .build(date -> Log.d(TAG , "RealTime initialized, dateTime: " + date));
+      .setSyncBackoffDelay(30, TimeUnit.SECONDS)
+      .build(date -> Log.d(TAG, "RealTime is initialized, current dateTime: " + date));
 ```
 
 Then everywhere you need reliable time first you need to check if RealTime is initialized or not:
@@ -63,13 +67,6 @@ if (RealTime.isInitialized()) {
 
 # Notes
 - If you want to use custom server you need to make sure that server's time is correct and reliable.
-- If you are initializing shared preference inside your Application class, use this line instead of raw context instance:
-
-```
-Context context = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) ?
-    createDeviceProtectedStorageContext() : getApplicationContext();
-```
-It will prevent crash after rebooting device because RealTime starts to initialize on direct boot mode event: ```android.intent.action.LOCKED_BOOT_COMPLETED```
 - RealTime tries to get time using a retry with delay strategy if current network doesn't have internet connection yet.
 - RealTime will not add location permissions to manifest automatically. If you want to use GPS provider, add required permissions to your manifest:
 
@@ -100,9 +97,7 @@ ir.pool.ntp.org
 | method                                      | description                                                                                                                 |
 |---------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------|
 | withNtpServer(String ntpHost)               | This function will enable and set the url of NTP server.                                                                   |
-| withNtpServer()                             | This function enables NTP server with default NTP server.                                                                         |
 | withTimeServer(String serverHost)           | This function will enable and set the url of custom server.                                                                         |
-| withTimeServer()                            | This function enables custom server with default server address.                                                                  |
 | withGpsProvider()                           | This function enables gps provider if required permissions exist in manifest.  |
 | setLoggingEnabled(boolean enabled)          | Sets if logs needs to be logged in.                                                                                            |
 | build()                  | Starts to initialize RealTime using enabled providers.                                                                                                 |
