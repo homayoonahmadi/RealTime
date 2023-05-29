@@ -113,11 +113,14 @@ public class RealTime implements LifecycleEventObserver {
         switch (event) {
             case ON_START -> {
                 LogUtils.i(TAG, "Application is in foreground");
-                if (isInitialized() && cachedTimeIsValid(backoffDelay)) {
-                    LogUtils.v(TAG, "RealTime cached time is valid. No need to resynchronize RealTime at this time.");
-                } else {
-                    LogUtils.v(TAG, "RealTime cached time is NOT valid. Trying to resynchronize RealTime...");
-                    build();
+
+                if (backoffDelay > 0) {
+                    if (isInitialized() && cachedTimeIsValid(backoffDelay)) {
+                        LogUtils.v(TAG, "RealTime cached time is valid. No need to resynchronize RealTime at this time.");
+                    } else {
+                        LogUtils.v(TAG, "RealTime cached time is NOT valid. Trying to resynchronize RealTime...");
+                        build();
+                    }
                 }
             }
             case ON_STOP -> LogUtils.i(TAG, "Application is in background");
