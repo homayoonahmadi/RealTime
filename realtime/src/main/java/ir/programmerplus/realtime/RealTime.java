@@ -114,13 +114,11 @@ public class RealTime implements LifecycleEventObserver {
             case ON_START -> {
                 LogUtils.i(TAG, "Application is in foreground");
 
-                if (backoffDelay > 0) {
-                    if (isInitialized() && cachedTimeIsValid(backoffDelay)) {
-                        LogUtils.v(TAG, "RealTime cached time is valid. No need to resynchronize RealTime at this time.");
-                    } else {
-                        LogUtils.v(TAG, "RealTime cached time is NOT valid. Trying to resynchronize RealTime...");
-                        build();
-                    }
+                if (isInitialized() && cachedTimeIsValid(backoffDelay)) {
+                    LogUtils.v(TAG, "RealTime cached time is valid. No need to resynchronize RealTime at this time.");
+                } else {
+                    LogUtils.v(TAG, "RealTime cached time is NOT valid. Trying to resynchronize RealTime...");
+                    build();
                 }
             }
             case ON_STOP -> LogUtils.i(TAG, "Application is in background");
@@ -294,6 +292,8 @@ public class RealTime implements LifecycleEventObserver {
     }
 
     private boolean cachedTimeIsValid(long backoffDelay) {
+        if (backoffDelay <= 0) return true;
+
         long cachedTime = CacheUtils.getCachedTime();
         long timeNow = now().getTime();
 
