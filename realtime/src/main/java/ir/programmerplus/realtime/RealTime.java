@@ -392,9 +392,12 @@ public class RealTime implements LifecycleEventObserver {
                 }
             }
 
-        } catch (Exception e) {
+        } catch (ParseException | IOException e) {
             LogUtils.w(TAG, e.getClass().getCanonicalName() + ":" + e.getMessage());
             throw e;
+
+        } catch (Exception e) {
+            LogUtils.w(TAG, e.getClass().getCanonicalName() + ":" + e.getMessage());
         }
 
         throw new IOException();
