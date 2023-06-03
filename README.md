@@ -34,7 +34,7 @@ Step 2. Add the dependency
 
 ```groovy
 dependencies {
-    implementation 'com.github.homayoonahmadi:RealTime:1.0.1'
+    implementation 'com.github.homayoonahmadi:RealTime:1.2.4'
 }
 ```
 
