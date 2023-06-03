@@ -11,8 +11,8 @@ android {
         applicationId "ir.programmerplus.realtime_example"
         minSdk 16
         targetSdk 33
-        versionCode 6
-        versionName "1.2.2"
+        versionCode 7
+        versionName "1.2.4"
         multiDexEnabled true
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"

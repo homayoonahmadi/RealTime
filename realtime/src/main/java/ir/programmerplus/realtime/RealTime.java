@@ -368,24 +368,27 @@ public class RealTime implements LifecycleEventObserver {
      * @throws ParseException throws ParseException if date header is not formed
      *                        in correct datetime format
      */
-    private Long fetchTimeServer(String timeServerHost) throws IOException, ParseException, NullPointerException {
+    private Long fetchTimeServer(String timeServerHost) throws IOException, ParseException {
         LogUtils.d(TAG, "Fetching time from time server: " + timeServerHost + " ...");
 
         try {
             URL url = new URL(timeServerHost);
             urlConnection = (HttpURLConnection) url.openConnection();
             urlConnection.setConnectTimeout(10 * 1000);
-            Map<String, List<String>> headers = urlConnection.getHeaderFields();
 
-            List<String> dateHeader = headers.get("date");
+            if (urlConnection != null) {
+                Map<String, List<String>> headers = urlConnection.getHeaderFields();
 
-            if (dateHeader != null && !dateHeader.isEmpty()) {
-                SimpleDateFormat format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.ENGLISH);
-                Date date = format.parse(dateHeader.get(0));
+                List<String> dateHeader = headers.get("date");
 
-                if (date != null) {
-                    LogUtils.i(TAG, "Time from " + timeServerHost + ": " + date);
-                    return date.getTime();
+                if (dateHeader != null && !dateHeader.isEmpty()) {
+                    SimpleDateFormat format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.ENGLISH);
+                    Date date = format.parse(dateHeader.get(0));
+
+                    if (date != null) {
+                        LogUtils.i(TAG, "Time from " + timeServerHost + ": " + date);
+                        return date.getTime();
+                    }
                 }
             }
 
