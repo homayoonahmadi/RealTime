@@ -111,8 +111,8 @@ public class RealTime implements LifecycleEventObserver {
     @Override
     public void onStateChanged(@NonNull LifecycleOwner lifecycleOwner, @NonNull Lifecycle.Event event) {
         switch (event) {
-            case ON_START -> {
-                LogUtils.i(TAG, "Application is in foreground");
+            case ON_START, ON_RESUME -> {
+                LogUtils.i(TAG, "Application is in foreground. Lifecycle event: " + event);
 
                 if (isInitialized() && cachedTimeIsValid(backoffDelay)) {
                     LogUtils.v(TAG, "RealTime cached time is valid. No need to resynchronize RealTime at this time.");
@@ -483,9 +483,10 @@ public class RealTime implements LifecycleEventObserver {
                 LogUtils.i(TAG, "Location provider is enabled.");
             }
 
-            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 1, 0, locationListener);
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1, 0, locationListener);
             LogUtils.d(TAG, "Requesting time from location provider...");
+        } else {
+            LogUtils.w(TAG, "Location permission was not granted.");
         }
     }
 
